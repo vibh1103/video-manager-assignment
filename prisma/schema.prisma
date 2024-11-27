@@ -1,0 +1,17 @@
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model Video {
+  id        Int      @id @default(autoincrement())
+  name      String
+  size      Int
+  duration  Int
+  path      String
+  uploadedAt DateTime @default(now())
+}

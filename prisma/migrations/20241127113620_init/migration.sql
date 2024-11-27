@@ -1,9 +1,0 @@
--- CreateTable
-CREATE TABLE "Video" (
-    "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
-    "name" TEXT NOT NULL,
-    "size" INTEGER NOT NULL,
-    "duration" INTEGER NOT NULL,
-    "path" TEXT NOT NULL,
-    "uploadedAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
-);

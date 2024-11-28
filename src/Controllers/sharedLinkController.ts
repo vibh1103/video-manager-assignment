@@ -14,24 +14,16 @@ export const generateSharedLink = async (
 ): Promise<void> => {
   const { videoId, expiresInHours } = req.body;
 
-  if (!videoId || typeof expiresInHours !== 'number' || expiresInHours <= 0) {
-    res.status(400).json({ error: 'Invalid input parameters' });
-    return;
-  }
-
   try {
-    // Check if the video exists
     const video = await findUniqueVideo(videoId);
     if (!video) {
       res.status(404).json({ error: 'Video not found' });
       return;
     }
 
-    // Generate the sharable link
-    const link = uuidv4(); // Generate a unique link identifier
+    const link = uuidv4();
     const expiresAt = new Date(Date.now() + expiresInHours * 60 * 60 * 1000);
 
-    // Save the link in the database
     const sharedLink = await createSharedLink({
       videoId,
       link,
@@ -55,7 +47,6 @@ export const accessSharedLink = async (
   const { link } = req.params;
 
   try {
-    // Check if the link exists and is still valid
     const sharedLink = await findUniqueSharedLink(Number(link));
 
     if (sharedLink === undefined) {
@@ -68,7 +59,6 @@ export const accessSharedLink = async (
       return;
     }
 
-    // Respond with video metadata or streaming URL
     res.status(200).json({
       video: {
         id: sharedLink.video.id,
@@ -99,7 +89,7 @@ export const getSharedVideo = async (
     const videoPath = path.resolve(__dirname, '../..', sharedLink.video.path);
 
     try {
-      fs.existsSync(videoPath); // Check if the file exists
+      fs.existsSync(videoPath);
     } catch (error) {
       res.status(404).json({ error: 'Video file not found.' });
       return;

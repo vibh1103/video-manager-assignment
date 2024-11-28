@@ -9,6 +9,14 @@ import {
   accessSharedLink,
   generateSharedLink
 } from '../Controllers/sharedLinkController';
+import JoiValidationError from 'express-joi-validation';
+import {
+  accessSharedLinkSchema,
+  generateSharedLinkSchema,
+  mergeVideosSchema,
+  trimVideoSchema
+} from '../utils/joi.service';
+const validator = JoiValidationError.createValidator({});
 
 const router = Router();
 
@@ -78,7 +86,7 @@ router.post('/upload', upload.single('video'), uploadVideo);
  *       500:
  *         description: Internal server error.
  */
-router.post('/trim', trimVideo);
+router.post('/trim', validator.body(trimVideoSchema), trimVideo);
 /**
  * @swagger
  * /videos/merge:
@@ -111,7 +119,7 @@ router.post('/trim', trimVideo);
  *       500:
  *         description: Internal server error.
  */
-router.post('/merge', mergeVideos);
+router.post('/merge', validator.body(mergeVideosSchema), mergeVideos);
 /**
  * @swagger
  * /videos/share:
@@ -145,7 +153,11 @@ router.post('/merge', mergeVideos);
  *       500:
  *         description: Internal server error.
  */
-router.post('/share', generateSharedLink);
+router.post(
+  '/share',
+  validator.body(generateSharedLinkSchema),
+  generateSharedLink
+);
 /**
  * @swagger
  * /videos/shared/{linkId}:
@@ -172,6 +184,10 @@ router.post('/share', generateSharedLink);
  *       500:
  *         description: Internal server error.
  */
-router.get('/shared/:link', accessSharedLink);
+router.get(
+  '/shared/:link',
+  validator.body(accessSharedLinkSchema),
+  accessSharedLink
+);
 
 export default router;

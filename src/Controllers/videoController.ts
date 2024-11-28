@@ -13,9 +13,7 @@ import {
 import {
   findUniqueVideo,
   createVideo,
-  findMultipleVideo,
-  createSharedLink,
-  findUniqueSharedLink
+  findMultipleVideo
 } from '../utils/db.service';
 
 export const uploadVideo = async (
@@ -68,29 +66,13 @@ export const uploadVideo = async (
 export const trimVideo = async (req: Request, res: Response): Promise<void> => {
   const { videoId, start, end } = req.body;
 
-  if (typeof videoId !== 'number' || start === undefined || end === undefined) {
-    res.status(400).json({ error: 'Invalid input parameters' });
-    return;
-  }
-
   try {
-    // Fetch the original video metadata
     const video = await findUniqueVideo(videoId);
     if (!video) {
       res.status(404).json({ error: 'Video not found' });
       return;
     }
 
-    // Validate the trimming range
-    if (start < 0 || end > video.duration || start >= end) {
-      res.status(400).json({
-        error:
-          'Invalid start or end time. Ensure the range is within the video duration.'
-      });
-      return;
-    }
-
-    // Perform trimming using FFmpeg
     const outputPath = `${video.path.split('.mp4')[0]}_trimmed_${Date.now()}.mp4`;
 
     try {
@@ -120,22 +102,10 @@ export const mergeVideos = async (
 ): Promise<void> => {
   const { videoIds } = req.body;
 
-  // Validate request input
-  if (!Array.isArray(videoIds) || videoIds.length < 2) {
-    res.status(400).json({ error: 'Provide at least two video IDs to merge' });
-    return;
-  }
-
   try {
-    // Fetch video metadata for all provided IDs
     const videos = await findMultipleVideo(videoIds);
 
-    if (videos === undefined) {
-      res.status(404).json({ error: 'One or more videos not found' });
-      return;
-    }
-
-    if (videos.length !== videoIds.length) {
+    if (videos === undefined || videos.length !== videoIds.length) {
       res.status(404).json({ error: 'One or more videos not found' });
       return;
     }

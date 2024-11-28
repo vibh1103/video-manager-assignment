@@ -1,6 +1,7 @@
 import express from 'express';
 import dotenv from 'dotenv';
 import { authMiddleware } from './middlewares/authMiddleware';
+import videoRoutes  from './Routes/videoRoutes'
 import { PrismaClient } from '@prisma/client';
 const prisma = new PrismaClient();
 
@@ -13,6 +14,7 @@ app.use(express.json());
 
 app.use(authMiddleware);
 
+app.use('/videos', videoRoutes)
 
 
 app.listen(PORT, () => {

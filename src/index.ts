@@ -13,6 +13,16 @@ const swaggerOptions:swaggerJsdoc.Options = {
       title: 'Video API',
       version: '1.0.0',
     },
+    components: {
+      securitySchemes: {
+        ApiKeyAuth: {
+          type: 'apiKey',
+          in: 'header',
+          name: 'x-api-key',
+          description: 'API key for authorization',
+        },
+      },
+    },
   },
   apis: ['./src/Routes/*.ts'],
 };

@@ -12,6 +12,8 @@ const router = Router();
  *     tags:
  *       - Videos
  *     description: Allows users to upload a video file with configurable size and duration limits.
+ *     security:
+ *       - ApiKeyAuth: []
  *     requestBody:
  *       required: true
  *       content:
@@ -19,7 +21,7 @@ const router = Router();
  *           schema:
  *             type: object
  *             properties:
- *               file:
+ *               video:
  *                 type: string
  *                 format: binary
  *                 description: Video file to upload.
@@ -49,6 +51,8 @@ router.post('/upload', upload.single('video'), uploadVideo);
  *     tags:
  *       - Videos
  *     description: Allows users to trim a previously uploaded video from the start or end.
+ *     security:
+ *       - ApiKeyAuth: []
  *     requestBody:
  *       required: true
  *       content:
@@ -84,6 +88,8 @@ router.post('/trim', trimVideo);
  *     tags:
  *       - Videos
  *     description: Allows users to merge multiple previously uploaded videos into one.
+ *     security:
+ *       - ApiKeyAuth: []
  *     requestBody:
  *       required: true
  *       content:
@@ -115,6 +121,8 @@ router.post('/merge', mergeVideos);
  *     tags:
  *       - Videos
  *     description: Allows users to generate a time-based sharable link for a video.
+ *     security:
+ *       - ApiKeyAuth: []
  *     requestBody:
  *       required: true
  *       content:
@@ -147,6 +155,9 @@ router.post('/share', generateSharedLink);
  *     tags:
  *       - Videos
  *     description: Allows users to access a video through a time-based sharable link.
+ *     security:
+ *       - ApiKeyAuth: []
+ *     requestBody:
  *     parameters:
  *       - in: path
  *         name: linkId

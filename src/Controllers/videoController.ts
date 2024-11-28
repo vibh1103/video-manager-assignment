@@ -141,7 +141,7 @@ export const mergeVideos = async (req: Request, res: Response): Promise<void> =>
     }
 
     // Generate FFmpeg input list
-    const fileListPath = `temp_${Date.now()}.txt`;
+    const fileListPath = `temp_${Date.now()}.mp4`;
     const fileListContent = videos.map((v) => `file '${v.path}'`).join('\n');
 
     try {

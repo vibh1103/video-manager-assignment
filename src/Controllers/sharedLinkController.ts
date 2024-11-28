@@ -5,7 +5,7 @@ import {
   findUniqueVideo,
   createSharedLink,
   findUniqueSharedLink
-} from '../utils/db.service';
+} from '../services/db.service';
 import { v4 as uuidv4 } from 'uuid';
 
 export const generateSharedLink = async (

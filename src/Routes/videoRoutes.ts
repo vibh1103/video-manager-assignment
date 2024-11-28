@@ -15,7 +15,7 @@ import {
   generateSharedLinkSchema,
   mergeVideosSchema,
   trimVideoSchema
-} from '../utils/joi.service';
+} from '../utils/joi.util';
 const validator = JoiValidationError.createValidator({});
 
 const router = Router();

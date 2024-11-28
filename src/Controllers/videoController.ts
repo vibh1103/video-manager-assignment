@@ -9,12 +9,12 @@ import {
   ffmpegMerge,
   ffmpegTrim,
   getVideoDuration
-} from '../utils/ffmpeg.service';
+} from '../services/ffmpeg.service';
 import {
   findUniqueVideo,
   createVideo,
   findMultipleVideo
-} from '../utils/db.service';
+} from '../services/db.service';
 
 export const uploadVideo = async (
   req: Request,

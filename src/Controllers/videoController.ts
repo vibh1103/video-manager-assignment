@@ -1,12 +1,27 @@
 import { Request, Response } from 'express';
-import { MIN_VIDEO_DURATION_SECS, MAX_VIDEO_DURATION_SECS } from '../config/env.config';
+import {
+  MIN_VIDEO_DURATION_SECS,
+  MAX_VIDEO_DURATION_SECS
+} from '../config/env.config';
 import path from 'path';
 import fs from 'fs/promises';
-import { ffmpegMerge, ffmpegTrim, getVideoDuration } from '../utils/ffmpeg.service';
-import { findUniqueVideo, createVideo, findMultipleVideo, createSharedLink, findUniqueSharedLink } from '../utils/db.service';
+import {
+  ffmpegMerge,
+  ffmpegTrim,
+  getVideoDuration
+} from '../utils/ffmpeg.service';
+import {
+  findUniqueVideo,
+  createVideo,
+  findMultipleVideo,
+  createSharedLink,
+  findUniqueSharedLink
+} from '../utils/db.service';
 
-
-export const uploadVideo = async (req: Request, res: Response): Promise<void> => {
+export const uploadVideo = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
   const file = req.file;
 
   if (!file) {
@@ -19,29 +34,34 @@ export const uploadVideo = async (req: Request, res: Response): Promise<void> =>
   try {
     const duration = await getVideoDuration(filePath);
 
-    if (duration < MIN_VIDEO_DURATION_SECS || duration > MAX_VIDEO_DURATION_SECS) {
+    if (
+      duration < MIN_VIDEO_DURATION_SECS ||
+      duration > MAX_VIDEO_DURATION_SECS
+    ) {
       await fs.unlink(filePath).catch(() => {});
       res.status(400).json({
-        error: `Video duration must be between ${MIN_VIDEO_DURATION_SECS} and ${MAX_VIDEO_DURATION_SECS} seconds.`,
+        error: `Video duration must be between ${MIN_VIDEO_DURATION_SECS} and ${MAX_VIDEO_DURATION_SECS} seconds.`
       });
       return;
     }
 
-    let data =  {
-        name: file.originalname,
-        size: file.size,
-        duration: Math.round(duration),
-        path: file.path,
-      }
+    let data = {
+      name: file.originalname,
+      size: file.size,
+      duration: Math.round(duration),
+      path: file.path
+    };
 
-    let video = await createVideo(data)
-    
+    let video = await createVideo(data);
+
     res.status(201).json(video);
   } catch (error) {
     await fs.unlink(filePath).catch(() => {});
 
-    console.error(error); 
-    res.status(500).json({ error: 'An error occurred while processing the video' });
+    console.error(error);
+    res
+      .status(500)
+      .json({ error: 'An error occurred while processing the video' });
   }
 };
 
@@ -64,7 +84,8 @@ export const trimVideo = async (req: Request, res: Response): Promise<void> => {
     // Validate the trimming range
     if (start < 0 || end > video.duration || start >= end) {
       res.status(400).json({
-        error: 'Invalid start or end time. Ensure the range is within the video duration.',
+        error:
+          'Invalid start or end time. Ensure the range is within the video duration.'
       });
       return;
     }
@@ -73,29 +94,30 @@ export const trimVideo = async (req: Request, res: Response): Promise<void> => {
     const outputPath = `${video.path.split('.mp4')[0]}_trimmed_${Date.now()}.mp4`;
 
     try {
-      await ffmpegTrim(video.path, start, end, outputPath)
+      await ffmpegTrim(video.path, start, end, outputPath);
     } catch (error) {
       res.status(500).json({ error: 'Failed to trim video' });
       return;
     }
-    
 
-      const trimmedVideo = await createVideo({
-            name: `${video.name}_trimmed`,
-            size: (await fs.stat(outputPath)).size,
-            duration: end - start,
-            path: outputPath,
-        })
-      
+    const trimmedVideo = await createVideo({
+      name: `${video.name}_trimmed`,
+      size: (await fs.stat(outputPath)).size,
+      duration: end - start,
+      path: outputPath
+    });
 
-      res.status(201).json(trimmedVideo);
+    res.status(201).json(trimmedVideo);
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: 'An unexpected error occurred' });
   }
 };
 
-export const mergeVideos = async (req: Request, res: Response): Promise<void> => {
+export const mergeVideos = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
   const { videoIds } = req.body;
 
   // Validate request input
@@ -106,7 +128,7 @@ export const mergeVideos = async (req: Request, res: Response): Promise<void> =>
 
   try {
     // Fetch video metadata for all provided IDs
-    const videos = await findMultipleVideo(videoIds)
+    const videos = await findMultipleVideo(videoIds);
 
     if (videos === undefined) {
       res.status(404).json({ error: 'One or more videos not found' });
@@ -123,7 +145,7 @@ export const mergeVideos = async (req: Request, res: Response): Promise<void> =>
     const fileListContent = videos.map((v) => `file '${v.path}'`).join('\n');
     const totalDuration = videos.reduce((sum, v) => sum + v.duration, 0);
     const totalSize = videos.reduce((sum, v) => sum + v.size, 0);
-    
+
     try {
       await fs.writeFile(fileListPath, fileListContent); // Save file list to the filesystem
     } catch (writeError) {
@@ -137,15 +159,15 @@ export const mergeVideos = async (req: Request, res: Response): Promise<void> =>
     await ffmpegMerge(fileListPath, outputPath);
     await fs.unlink(fileListPath);
 
-      const mergedVideo = await createVideo({
-          name: 'Merged Video',
-          size: totalSize,
-          duration: totalDuration,
-          path: outputPath,
-      });
+    const mergedVideo = await createVideo({
+      name: 'Merged Video',
+      size: totalSize,
+      duration: totalDuration,
+      path: outputPath
+    });
 
-      res.status(201).json(mergedVideo);
-      return;
+    res.status(201).json(mergedVideo);
+    return;
   } catch (error) {
     console.error('Unexpected error:', error);
     res.status(500).json({ error: 'An unexpected error occurred' });

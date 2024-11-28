@@ -14,22 +14,26 @@ if (!fs.existsSync(UPLOAD_DIR)) {
 const storage = multer.diskStorage({
   filename: (req, file, callback) => {
     const ext = path.extname(file.originalname);
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
     callback(null, uniqueSuffix + ext);
   },
   destination: (req, file, callback) => {
-    callback(null, UPLOAD_DIR)
+    callback(null, UPLOAD_DIR);
   }
-})
+});
 
 export const upload = multer({
-  storage, 
+  storage,
   limits: { fileSize: Number(process.env.MAX_FILE_SIZE_MB) * 1024 * 1024 }, // Convert MB to bytes
-  fileFilter: (req: Request, file: Express.Multer.File, cb: FileFilterCallback) => {
+  fileFilter: (
+    req: Request,
+    file: Express.Multer.File,
+    cb: FileFilterCallback
+  ) => {
     const ext = path.extname(file.originalname);
     if (ext !== '.mp4') {
       return cb(new Error('Only .mp4 files are allowed!'));
     }
     cb(null, true);
-  },
+  }
 });

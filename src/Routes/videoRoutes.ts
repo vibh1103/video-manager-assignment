@@ -1,7 +1,14 @@
 import { Router } from 'express';
-import { mergeVideos, trimVideo, uploadVideo } from '../Controllers/videoController';
+import {
+  mergeVideos,
+  trimVideo,
+  uploadVideo
+} from '../Controllers/videoController';
 import { upload } from '../config/multerConfig';
-import { accessSharedLink, generateSharedLink } from '../Controllers/sharedLinkController';
+import {
+  accessSharedLink,
+  generateSharedLink
+} from '../Controllers/sharedLinkController';
 
 const router = Router();
 
@@ -166,6 +173,5 @@ router.post('/share', generateSharedLink);
  *         description: Internal server error.
  */
 router.get('/shared/:link', accessSharedLink);
-
 
 export default router;

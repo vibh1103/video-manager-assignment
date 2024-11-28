@@ -36,4 +36,3 @@ const router = Router();
 router.get('/:linkId', getSharedVideo);
 
 export default router;
-

@@ -2,6 +2,7 @@ import express from 'express';
 import dotenv from 'dotenv';
 import { authMiddleware } from './middlewares/authMiddleware';
 import videoRoutes  from './Routes/videoRoutes';
+import streamRoute from './Routes/streamRoute'
 import swaggerUi from 'swagger-ui-express';
 import swaggerJsdoc from 'swagger-jsdoc';
 import { PrismaClient } from '@prisma/client';
@@ -37,6 +38,7 @@ const PORT = process.env.PORT || 3000;
 app.use(express.json());
 
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+app.use('/stream', streamRoute)
 app.use(authMiddleware);
 
 app.use('/videos', videoRoutes)

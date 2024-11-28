@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { accessSharedLink, generateSharedLink, mergeVideos, trimVideo, uploadVideo } from '../Controllers/videoController';
+import { accessSharedLink, generateSharedLink, getSharedVideo, mergeVideos, trimVideo, uploadVideo } from '../Controllers/videoController';
 import { upload } from '../config/multerConfig';
 
 const router = Router();
@@ -25,15 +25,6 @@ const router = Router();
  *                 type: string
  *                 format: binary
  *                 description: Video file to upload.
- *               maxSize:
- *                 type: integer
- *                 description: Maximum size of the video in MB.
- *               minDuration:
- *                 type: integer
- *                 description: Minimum duration of the video in seconds.
- *               maxDuration:
- *                 type: integer
- *                 description: Maximum duration of the video in seconds.
  *     responses:
  *       201:
  *         description: Video uploaded successfully.
@@ -174,5 +165,6 @@ router.post('/share', generateSharedLink);
  *         description: Internal server error.
  */
 router.get('/shared/:link', accessSharedLink);
+
 
 export default router;

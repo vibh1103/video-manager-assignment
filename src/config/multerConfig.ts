@@ -11,8 +11,19 @@ if (!fs.existsSync(UPLOAD_DIR)) {
   fs.mkdirSync(UPLOAD_DIR);
 }
 
+const storage = multer.diskStorage({
+  filename: (req, file, callback) => {
+    const ext = path.extname(file.originalname);
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+    callback(null, uniqueSuffix + ext);
+  },
+  destination: (req, file, callback) => {
+    callback(null, UPLOAD_DIR)
+  }
+})
+
 export const upload = multer({
-  dest: UPLOAD_DIR,
+  storage, 
   limits: { fileSize: Number(process.env.MAX_FILE_SIZE_MB) * 1024 * 1024 }, // Convert MB to bytes
   fileFilter: (req: Request, file: Express.Multer.File, cb: FileFilterCallback) => {
     const ext = path.extname(file.originalname);

@@ -4,6 +4,7 @@ import ffmpeg from 'fluent-ffmpeg';
 ffmpeg.setFfprobePath('/opt/homebrew/bin/ffprobe');
 import path from 'path';
 import fs from 'fs/promises';
+import fsOld from 'fs';
 import { v4 as uuidv4 } from 'uuid';
 
 
@@ -227,7 +228,7 @@ export const generateSharedLink = async (req: Request, res: Response): Promise<v
     });
 
     res.status(201).json({
-      link: `${req.protocol}://${req.get('host')}/videos/shared/${sharedLink.link}`,
+      link: `${req.protocol}://${req.get('host')}/stream/${sharedLink.link}`,
       expiresAt: sharedLink.expiresAt,
     });
   } catch (error) {
@@ -263,5 +264,39 @@ export const accessSharedLink = async (req: Request, res: Response): Promise<voi
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: 'Failed to access shared link' });
+  }
+};
+
+export const getSharedVideo = async (req: Request, res: Response): Promise<void> => {
+  const { linkId } = req.params;  
+
+  try {
+    const sharedLink = await prisma.sharedLink.findUnique({
+      where: { link: linkId },
+      include: { video: true },
+    });
+
+    if (!sharedLink || new Date() > sharedLink.expiresAt) {
+      res.status(404).json({ error: 'Link expired or invalid' });
+      return;
+    }
+    const videoPath = path.resolve(__dirname, '../..' ,sharedLink.video.path);
+
+    try {
+      await fs.access(videoPath);  // Check if the file exists
+    } catch (error) {
+      res.status(404).json({ error: 'Video file not found.' });
+      return;
+    }
+
+    res.setHeader('Content-Type', 'video/mp4'); 
+    res.setHeader('Content-Disposition', `inline; filename="${sharedLink.video.name}"`);  
+
+    const videoStream = fsOld.createReadStream(videoPath);
+    videoStream.pipe(res);  
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Internal server error.' }); 
+    return;
   }
 };

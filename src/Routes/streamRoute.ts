@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import {  getSharedVideo } from '../Controllers/videoController';
+import { getSharedVideo } from '../Controllers/sharedLinkController';
 
 const router = Router();
 

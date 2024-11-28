@@ -1,6 +1,7 @@
 import { Router } from 'express';
-import { accessSharedLink, generateSharedLink, getSharedVideo, mergeVideos, trimVideo, uploadVideo } from '../Controllers/videoController';
+import { mergeVideos, trimVideo, uploadVideo } from '../Controllers/videoController';
 import { upload } from '../config/multerConfig';
+import { accessSharedLink, generateSharedLink } from '../Controllers/sharedLinkController';
 
 const router = Router();
 

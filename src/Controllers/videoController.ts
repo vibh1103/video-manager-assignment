@@ -3,7 +3,9 @@ import { PrismaClient } from '@prisma/client';
 import ffmpeg from 'fluent-ffmpeg';
 ffmpeg.setFfprobePath('/opt/homebrew/bin/ffprobe');
 import path from 'path';
-import fs from 'fs/promises'; 
+import fs from 'fs/promises';
+import { v4 as uuidv4 } from 'uuid';
+
 
 const prisma = new PrismaClient();
 
@@ -191,5 +193,75 @@ export const mergeVideos = async (req: Request, res: Response): Promise<void> =>
   } catch (error) {
     console.error('Unexpected error:', error);
     res.status(500).json({ error: 'An unexpected error occurred' });
+  }
+};
+
+
+export const generateSharedLink = async (req: Request, res: Response): Promise<void> => {
+  const { videoId, expiresInHours } = req.body;
+
+  if (!videoId || typeof expiresInHours !== 'number' || expiresInHours <= 0) {
+    res.status(400).json({ error: 'Invalid input parameters' });
+    return;
+  }
+
+  try {
+    // Check if the video exists
+    const video = await prisma.video.findUnique({ where: { id: videoId } });
+    if (!video) {
+      res.status(404).json({ error: 'Video not found' });
+      return;
+    }
+
+    // Generate the sharable link
+    const link = uuidv4(); // Generate a unique link identifier
+    const expiresAt = new Date(Date.now() + expiresInHours * 60 * 60 * 1000);
+
+    // Save the link in the database
+    const sharedLink = await prisma.sharedLink.create({
+      data: {
+        videoId,
+        link,
+        expiresAt,
+      },
+    });
+
+    res.status(201).json({
+      link: `${req.protocol}://${req.get('host')}/videos/shared/${sharedLink.link}`,
+      expiresAt: sharedLink.expiresAt,
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Failed to generate shared link' });
+  }
+};
+
+export const accessSharedLink = async (req: Request, res: Response): Promise<void> => {
+  const { link } = req.params;
+
+  try {
+    // Check if the link exists and is still valid
+    const sharedLink = await prisma.sharedLink.findUnique({
+      where: { link },
+      include: { video: true },
+    });
+
+    if (!sharedLink || new Date() > sharedLink.expiresAt) {
+      res.status(404).json({ error: 'Link expired or invalid' });
+      return;
+    }
+
+    // Respond with video metadata or streaming URL
+    res.status(200).json({
+      video: {
+        id: sharedLink.video.id,
+        name: sharedLink.video.name,
+        size: sharedLink.video.size,
+        duration: sharedLink.video.duration,
+      },
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Failed to access shared link' });
   }
 };

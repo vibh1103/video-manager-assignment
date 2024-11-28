@@ -13,5 +13,18 @@ model Video {
   size      Int
   duration  Int
   path      String
+  sharedLinks SharedLink[]
+  createdAt DateTime @default(now())
   uploadedAt DateTime @default(now())
 }
+
+model SharedLink {
+  id        Int      @id @default(autoincrement())
+  videoId   Int
+  link      String   @unique
+  expiresAt DateTime
+  video     Video    @relation(fields: [videoId], references: [id])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+

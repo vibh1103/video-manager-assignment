@@ -63,3 +63,28 @@ describe('Video Merging API', () => {
   });
 });
 
+
+describe('Link Sharing API', () => {
+  it('should generate a sharable link successfully', async () => {
+    const res = await request(app)
+      .post('/videos/share')
+      .send({
+        videoId: 1, // Assuming this video ID exists in the seeded database
+        expiresInHours: 2,
+      })
+      .set('x-api-key', process.env.API_TOKEN || '');
+    expect(res.status).toBe(201);
+    expect(res.body).toHaveProperty('link');
+    expect(res.body).toHaveProperty('expiresAt');
+  });
+
+  it('should return 404 for an expired or invalid link', async () => {
+    const res = await request(app)
+      .get('/videos/shared/invalid-link')
+      .set('x-api-key', process.env.API_TOKEN || '');
+    expect(res.status).toBe(404);
+    expect(res.body.error).toBe('Link expired or invalid');
+  });
+});
+
+

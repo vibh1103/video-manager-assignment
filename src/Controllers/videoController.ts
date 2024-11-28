@@ -117,3 +117,79 @@ export const trimVideo = async (req: Request, res: Response): Promise<void> => {
     res.status(500).json({ error: 'An unexpected error occurred' });
   }
 };
+
+export const mergeVideos = async (req: Request, res: Response): Promise<void> => {
+  const { videoIds } = req.body;
+
+  // Validate request input
+  if (!Array.isArray(videoIds) || videoIds.length < 2) {
+    res.status(400).json({ error: 'Provide at least two video IDs to merge' });
+    return;
+  }
+
+  try {
+    // Fetch video metadata for all provided IDs
+    const videos = await prisma.video.findMany({
+      where: { id: { in: videoIds } },
+    });
+
+    if (videos.length !== videoIds.length) {
+      res.status(404).json({ error: 'One or more videos not found' });
+      return;
+    }
+
+    // Generate FFmpeg input list
+    const fileListPath = `temp_${Date.now()}.txt`;
+    const fileListContent = videos.map((v) => `file '${v.path}'`).join('\n');
+
+    try {
+      await fs.writeFile(fileListPath, fileListContent); // Save file list to the filesystem
+    } catch (writeError) {
+      console.error('Error writing file list:', writeError);
+      res.status(500).json({ error: 'Failed to create temporary file list' });
+      return;
+    }
+
+    const outputPath = `uploads/merged_${Date.now()}.mp4`;
+
+    ffmpeg()
+      .input(fileListPath)
+      .inputFormat('concat')
+      .outputOptions('-c copy') // Use copy codec to avoid re-encoding
+      .output(outputPath)
+      .on('end', async () => {
+        try {
+          // Save merged video metadata to the database
+          const totalDuration = videos.reduce((sum, v) => sum + v.duration, 0);
+          const totalSize = videos.reduce((sum, v) => sum + v.size, 0);
+
+          const mergedVideo = await prisma.video.create({
+            data: {
+              name: 'Merged Video',
+              size: totalSize,
+              duration: totalDuration,
+              path: outputPath,
+            },
+          });
+
+          // Clean up temporary file
+          await fs.unlink(fileListPath);
+
+          res.status(201).json(mergedVideo);
+        } catch (dbError) {
+          console.error('Database error:', dbError);
+          await fs.unlink(fileListPath); // Ensure cleanup
+          res.status(500).json({ error: 'Failed to save merged video metadata' });
+        }
+      })
+      .on('error', async (ffmpegError) => {
+        console.error('FFmpeg error:', ffmpegError);
+        await fs.unlink(fileListPath); // Ensure cleanup
+        res.status(500).json({ error: 'Failed to merge videos' });
+      })
+      .run();
+  } catch (error) {
+    console.error('Unexpected error:', error);
+    res.status(500).json({ error: 'An unexpected error occurred' });
+  }
+};

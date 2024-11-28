@@ -40,3 +40,26 @@ describe('Video Trimming API', () => {
     expect(res.body.error).toBe('Invalid start or end time. Ensure the range is within the video duration.');
   });
 });
+
+describe('Video Merging API', () => {
+  it('should merge multiple videos successfully', async () => {
+    const res = await request(app)
+      .post('/videos/merge')
+      .send({
+        videoIds: [1, 2], // Assuming these video IDs exist in the seeded database
+      })
+      .set('x-api-key', process.env.API_TOKEN || '');
+    expect(res.status).toBe(201);
+    expect(res.body).toHaveProperty('name', 'Merged Video');
+  });
+
+  it('should return 400 for less than two video IDs', async () => {
+    const res = await request(app)
+      .post('/videos/merge')
+      .send({ videoIds: [1] })
+      .set('x-api-key', process.env.API_TOKEN || '');
+    expect(res.status).toBe(400);
+    expect(res.body.error).toBe('Provide at least two video IDs to merge');
+  });
+});
+

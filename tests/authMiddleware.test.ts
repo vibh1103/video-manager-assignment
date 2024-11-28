@@ -11,7 +11,7 @@ describe('Auth Middleware', () => {
   it('should return 200 if valid token is provided', async () => {
     const res = await request(app)
       .get('/')
-      .set('Authorization', process.env.API_TOKEN || '');
+      .set('x-api-key', process.env.API_TOKEN || '');
     expect(res.status).toBe(200);
   });
 });

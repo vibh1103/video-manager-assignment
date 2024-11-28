@@ -59,3 +59,61 @@ export const uploadVideo = async (req: Request, res: Response): Promise<void> =>
     res.status(500).json({ error: 'An error occurred while processing the video' });
   }
 };
+
+export const trimVideo = async (req: Request, res: Response): Promise<void> => {
+  const { videoId, start, end } = req.body;
+
+  if (typeof videoId !== 'number' || start === undefined || end === undefined) {
+    res.status(400).json({ error: 'Invalid input parameters' });
+    return;
+  }
+
+  try {
+    // Fetch the original video metadata
+    const video = await prisma.video.findUnique({ where: { id: videoId } });
+    if (!video) {
+      res.status(404).json({ error: 'Video not found' });
+      return;
+    }
+
+    // Validate the trimming range
+    if (start < 0 || end > video.duration || start >= end) {
+      res.status(400).json({
+        error: 'Invalid start or end time. Ensure the range is within the video duration.',
+      });
+      return;
+    }
+
+    // Perform trimming using FFmpeg
+    const outputPath = `${video.path.split('.mp4')[0]}_trimmed_${Date.now()}.mp4`;
+    ffmpeg(video.path)
+      .setStartTime(start) // in seconds
+      .setDuration(end - start)
+      .output(outputPath)
+      .on('end', async () => {
+        try {
+          // Save trimmed video metadata to the database
+          const trimmedVideo = await prisma.video.create({
+            data: {
+              name: `${video.name}_trimmed`,
+              size: (await fs.stat(outputPath)).size,
+              duration: end - start,
+              path: outputPath,
+            },
+          });
+          res.status(201).json(trimmedVideo);
+        } catch (dbError) {
+          console.error(dbError);
+          res.status(500).json({ error: 'Failed to save trimmed video to the database' });
+        }
+      })
+      .on('error', (ffmpegError) => {
+        console.error(ffmpegError);
+        res.status(500).json({ error: 'Failed to trim video' });
+      })
+      .run();
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'An unexpected error occurred' });
+  }
+};
